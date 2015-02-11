@@ -36,7 +36,8 @@ button {
   z-index: 3;
 }
 
-body {
+body.playing {
+  background-color: #ecf0f1;
   /* the joy of vendor prefixes. */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -44,10 +45,6 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-
-body.playing {
-  background-color: #ecf0f1;
 }
 body.done {
   background-color: #dfdfdf;
