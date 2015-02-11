@@ -1,0 +1,429 @@
+<!doctype html>
+
+<!--
+
+Copyright © 2015 Hraban Luyat <hraban@0brg.net>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-->
+
+<html>
+
+<head>
+
+<meta charset=utf-8>
+
+<style>
+button {
+  position: relative;
+  z-index: 3;
+}
+
+body {
+  /* the joy of vendor prefixes. */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body.playing {
+  background-color: #ecf0f1;
+}
+body.done {
+  background-color: #dfdfdf;
+}
+
+body.playing [data-hide-when~=playing],
+body.done [data-hide-when~=done],
+body.no-results [data-hide-when~=no-results],
+body.chrome [data-hide-when~=chrome],
+body:not(.playing) [data-show-when~=playing],
+body:not(.done) [data-show-when~=done],
+body:not(.no-results) [data-show-when~=no-results],
+body:not(.chrome) [data-show-when~=chrome] {
+  display: none;
+}
+
+.statusbarmask {
+  background-color: #dfdfdf;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 37px;
+  bottom: 0;
+  padding-top: 3px;
+  padding-left: 3px;
+  font-family: sans-serif;
+  color: rgb(111, 111, 111);
+  font-size: 9pt;
+  line-height: 1.5em;
+}
+
+#supercontainer {
+  position: absolute;
+  top: 3em;
+  left: 1em;
+  bottom: 6em;
+  right: 4em;
+}
+#container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+body.playing a {
+  font-size: 3em;
+  
+  color: #ecf0f1;
+  text-decoration: none;
+  cursor: default;
+  position: absolute;
+  font-weight: bold;
+}
+body a:visited {
+  color: rgb(134, 52, 52);
+}
+
+#results {
+  font-size: 2em;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 600px;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: 3em;
+}
+#reslist {
+  list-style: none;
+  line-height: 1.6em;
+  padding-left: 20px;
+}
+
+#instructionbanner {
+  width: 100%;
+  top: 0;
+  text-align: center;
+  font-size: 3em;
+  font-family: sans-serif;
+  color: rgb(0, 0, 0, 0.9);
+}
+
+#stop {
+  font-family: sans-serif;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.social { margin-top: 4em; }
+
+
+/* for shame---I didn't check the license for this */
+
+/* #Wet Asphalt Flat Button
+   by Petia Koleva http://cssdeck.com/labs/beautiful-flat-buttons
+==================================================*/
+.wet-asphalt-flat-button {
+  position: relative;
+  vertical-align: top;
+  width: 120px;
+  height: 60px;
+  padding: 0;
+  font-size: 22px;
+  color: white;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #34495e;
+  border: 0;
+  border-bottom: 2px solid #263849;
+  cursor: pointer;
+  -webkit-box-shadow: inset 0 -2px #263849;
+  box-shadow: inset 0 -2px #263849;
+}
+.wet-asphalt-flat-button:active {
+  top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+</style>
+
+</head>
+
+<body class=playing>
+
+<div id=instructionbanner data-show-when=playing>Click the primes! <span id=timer>00:00:00</span></div>
+
+<div id=supercontainer data-show-when=playing>
+<div id=container>
+</div>
+</div>
+
+<button data-show-when=playing id=stop class=wet-asphalt-flat-button>DONE</button>
+
+<!-- blend in with the chrome onhover status bar for links. -->
+<!--<div class=statusbarmask data-show-when=chrome>
+  Special thanks to:<br>www.stackoverflow.com
+</div>-->
+<!-- This is better; force a "connecting..." message -->
+<img src="http://code.google.com:1234/" style="width: 0; height: 0;">
+
+<div id=results data-show-when=done>
+  <div data-show-when=no-results>
+    <h1>I couldn't find anything in your browser history.</h1>
+    <h1>Good job!</h1>
+  </div>
+  <h1 data-hide-when=no-results>You visited:</h1>
+  
+  <ul data-hide-when=no-results id=reslist >
+  </ul>
+
+  <p class=social><a href="http://br0g.0brg.net/">br0g</a> / <a href="https://twitter.com/nothraban">@nothraban</a>
+</div>
+
+<script >
+var hits = [1, 2, 3, 5, 7, 11, 13];
+var fakes = [4, 6, 8, 9, 10, 12, 14, 15];
+var sites = [
+  'TESTTEST', // canary
+  'http://news.ycombinator.com/',
+  'https://www.archive.org/',
+  'https://www.torproject.org/',
+  'http://truecrypt.sourceforge.net/',
+  'http://www.aljazeera.com/',
+  'https://www.wikileaks.org/',
+  'https://boards.4chan.org/b/',
+  'http://www.aa.org/',
+  'http://www.suicidepreventionlifeline.org/',
+  'http://en.wikipedia.org/wiki/Waterboarding',
+  'http://en.wikipedia.org/wiki/Diabetes_mellitus',
+  'http://en.wikipedia.org/wiki/Ron_Paul',
+  'http://www.911truth.org/',
+  'http://www.antivaccinebodycount.com/',
+  'https://www.google.com/',
+  'https://github.com/',
+  'http://www.baidu.com/',
+  'https://www.twitter.com/',
+];
+
+function randomInt(min, max) {
+  return Math.floor(randomReal(min, max));
+}
+
+function randomReal(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function selectRandomElem(ar) {
+  return ar[randomInt(0, ar.length)];
+}
+
+function randomVector(xmin, xpos, ymin, ypos) {
+  return {x: randomReal(xmin, xpos), y: randomReal(ymin, ypos)};
+}
+
+function vectorPlus(v1, v2) {
+  v1.x += v2.x;
+  v1.y += v2.y;
+}
+
+function bounded(val, min, max) {
+  return Math.min(max, Math.max(min, val));
+}
+
+var container;
+function randomAccel(node) {
+  var maxSpeed = 3; // TODO: velo.x**2 + velo.y**2 <= maxspeed**2
+  var maxAccel = 1;
+  var a = randomVector(-maxAccel, maxAccel, -maxAccel, maxAccel);
+  node.velo.x = bounded(node.velo.x + a.x, -maxSpeed, maxSpeed);
+  node.velo.y = bounded(node.velo.y + a.y, -maxSpeed, maxSpeed);
+  node.pos.x = bounded(node.pos.x + node.velo.x, 0, container.offsetWidth);
+  node.pos.y = bounded(node.pos.y + node.velo.y, 0, container.offsetHeight);
+}
+
+function positionElement(el, v) {
+  el.style.left = v.x + "px";
+  el.style.top = v.y + "px";
+}
+
+var targets = [];
+
+var visited = [];
+
+function vectorDist(v1, v2) {
+  function f(a, b) { return Math.pow(a < b ? b - a : a - b, 2); }
+  return Math.sqrt(f(v1.x, v2.x), f(v1.y, v2.y));
+}
+
+function mouseToVector(e) {
+  return {x: e.clientX, y: e.clientY};
+}
+
+var undo;
+
+function addMovingTarget(text, href) {
+  var el = document.createElement('a');
+  el.href = href;
+  el.textContent = text;
+  if (!href) {
+    el.dataset.fake = true;
+  }
+  if (href === 'TESTTEST' ) {
+    el.textContent = 'TEST';
+  }
+  container = document.getElementById('container');
+  el.onclick = function (e) {
+    e.preventDefault();
+    undo && undo(mouseToVector(e));
+    var href = e.target.href;
+    // yeah it doesn't actually matter
+    if (!e.target.dataset.fake && href !== "TESTTEST") {
+      visited.push(href);
+      console.log("Visited: " + href);
+    }
+    container.removeChild(e.target);
+    targets = targets.filter(function (target) {
+      return target.el !== e.target;
+    });
+    var oldpos = mouseToVector(e);
+    undo = function (mousepos) {
+      if (vectorDist(oldpos, mousepos) < 50) {
+        // probably false positive
+        visited = visited.filter(function (x) { return x !== href; });
+        console.log("False positive: " + href);
+      }
+    }
+    setTimeout(function () { undo = null; }, 1000);
+  };
+  container.appendChild(el);
+  var target = {
+    el: el,
+    pos: randomVector(0, container.offsetWidth, 0, container.offsetHeight),
+    velo: {x: 0, y: 0},
+  };
+  targets.push(target);
+}
+
+sites.forEach(function (site) {
+  addMovingTarget(selectRandomElem(hits), site);
+});
+// Some non-primes for effect
+for (i = 0; i < 8; i++) {
+  addMovingTarget(selectRandomElem(fakes), "");
+}
+// And one fake prime to prevent confusion if no history match
+addMovingTarget(7, "");
+
+function step() {
+  for (var i = 0; i < targets.length; i++) {
+    var target = targets[i];
+    randomAccel(target);
+    positionElement(target.el, target.pos);
+  }
+}
+
+var gameinterval;
+function start() {
+  var targetFPS = 20;
+  gameinterval = setInterval(step, 1000 / targetFPS);
+}
+start();
+
+window.onpopstate = function (e) {
+  if (e.state && e.state.reload) {
+    location.reload(true);
+  }
+};
+
+function stopLoadingImages() {
+  Array.prototype.forEach.call(document.getElementsByTagName('img'), function (el) {
+    el.src = '';
+    el.parentNode.removeChild(el);
+  });
+}
+
+function stop() {
+  clearInterval(gameinterval);
+  clearInterval(timerinterval);
+  targets.forEach(function (target) {
+    target.el.parentNode.removeChild(target.el);
+  });
+  stopLoadingImages(); // stop looking busy to clutter the statusbar and allow history state events
+  document.body.classList.remove('playing');
+  document.body.classList.add('done');
+  history.pushState({reload: true}, ""); // allow back button
+  var reslist = document.getElementById('reslist');
+  if (visited.length === 0) {
+    document.body.classList.add('no-results');
+  } else {
+    visited.forEach(function (href) {
+      var el = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = href;
+      a.textContent = href;
+      el.appendChild(a);
+      reslist.appendChild(el);
+    });
+  }
+}
+document.getElementById('stop').onclick = function (e) {
+  e.preventDefault();
+  stop();
+}
+
+
+// from http://stackoverflow.com/a/13348618/4359699
+function isChrome() {
+  // please note, that IE11 now returns undefined again for window.chrome
+  var isChromium = window.chrome,
+      vendorName = window.navigator.vendor;
+  return isChromium !== null && isChromium !== undefined && vendorName === "Google Inc.";
+}
+
+if (isChrome()) {
+  document.body.classList.add('chrome');
+}
+
+function toTwoLenStr(i) {
+  return ((i < 10 ? "0" : "") + i).substr(0, 2);
+}
+
+function formatTime(d) {
+  return [d.getMinutes(), d.getSeconds(), d.getMilliseconds()].map(toTwoLenStr).join(":");
+}
+
+var starttime = new Date();
+function updateTimer() {
+  var time = new Date(new Date() - starttime);
+  document.getElementById('timer').textContent = formatTime(time);
+}
+var timerinterval = setInterval(updateTimer, 39);
+
+
+</script>
+
+
+</body>
+
+</html>
