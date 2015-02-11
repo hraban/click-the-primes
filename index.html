@@ -205,7 +205,6 @@ body a:visited {
 var hits = [1, 2, 3, 5, 7, 11, 13];
 var fakes = [4, 6, 8, 9, 10, 12, 14, 15];
 var sites = [
-  'TESTTEST', // canary
   'http://news.ycombinator.com/',
   'https://www.archive.org/',
   'https://www.torproject.org/',
@@ -289,16 +288,13 @@ function addMovingTarget(text, href) {
   if (!href) {
     el.dataset.fake = true;
   }
-  if (href === 'TESTTEST' ) {
-    el.textContent = 'TEST';
-  }
   container = document.getElementById('container');
   el.onclick = function (e) {
     e.preventDefault();
     undo && undo(mouseToVector(e));
     var href = e.target.href;
     // yeah it doesn't actually matter
-    if (!e.target.dataset.fake && href !== "TESTTEST") {
+    if (!e.target.dataset.fake) {
       visited.push(href);
       console.log("Visited: " + href);
     }
