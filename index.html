@@ -366,6 +366,7 @@ function stop() {
   document.body.classList.remove('playing');
   document.body.classList.add('done');
   history.pushState({reload: true}, ""); // allow back button
+  history.pushState({reload: true}, ""); // sssshh it's okay
   var reslist = document.getElementById('reslist');
   if (visited.length === 0) {
     document.body.classList.add('no-results');
